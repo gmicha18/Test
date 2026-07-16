@@ -1,5 +1,6 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
 #There are invalid dates, duplicates, 
 
@@ -41,17 +42,30 @@ covid_long['Cases'] = pd.to_numeric(covid_long['Cases'], errors='coerce')
 covid_long.dropna(subset=['Cases'], inplace=True)
 covid_long['Cases'] = covid_long['Cases'].astype(int)
 
-#Create Month and Week columns for monitoring
+#Create Month column - long term
 covid_long['Month'] = covid_long['DATE'].dt.month
-covid_long['Week'] = covid_long['DATE'].dt.isocalendar().week
 
 #Normalize the Cases column using StandardScaler
 scaler = StandardScaler()
 covid_long['Cases_Normalized'] = scaler.fit_transform(covid_long[['Cases']])
 
-#K-Means - Cluster based on 
+#K-Means - Cluster based on 3 levels 0 (low) - 3(high)
 kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
-covid_long['Risk_Level'] = kmeans.fit_predict(covid_long['Cases_Normalized'])
+covid_long['Risk_Level'] = kmeans.fit_predict(covid_long[['Cases_Normalized']])
+
+#rearrange columns
+order = [
+    'OBJECTID',
+    'DATE',
+    'Month',
+    'County',
+    'Group',
+    'Facility',
+    'Cases',
+    'Cases_Normalized',
+    'Risk_Level'
+]
+covid_long = covid_long[order]
 
 #output.csv file
 covid_long.to_csv('output.csv', index=False)
